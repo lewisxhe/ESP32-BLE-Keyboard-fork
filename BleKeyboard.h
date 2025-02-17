@@ -119,6 +119,14 @@ const MediaKeyReport KEY_MEDIA_WWW_BACK = {0, 32};
 const MediaKeyReport KEY_MEDIA_CONSUMER_CONTROL_CONFIGURATION = {0, 64}; // Media Selection
 const MediaKeyReport KEY_MEDIA_EMAIL_READER = {0, 128};
 
+#include "esp_arduino_version.h"
+#if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(3,0,0)
+#define StringType   String
+#define SubString    substring
+#else
+#define StringType   std::string
+#define SubString    substr
+#endif
 
 //  Low level key report: up to 6 keys and shift, ctrl etc at once
 typedef struct
@@ -138,8 +146,8 @@ private:
   BLEAdvertising*    advertising;
   KeyReport          _keyReport;
   MediaKeyReport     _mediaKeyReport;
-  String        deviceName;
-  String        deviceManufacturer;
+  StringType        deviceName;
+  StringType        deviceManufacturer;
   uint8_t            batteryLevel;
   bool               connected = false;
   uint32_t           _delay_ms = 7;
@@ -150,7 +158,7 @@ private:
   uint16_t version   = 0x0210;
 
 public:
-  BleKeyboard(String deviceName = "ESP32 Keyboard", String deviceManufacturer = "Espressif", uint8_t batteryLevel = 100);
+  BleKeyboard(StringType deviceName = "ESP32 Keyboard", StringType deviceManufacturer = "Espressif", uint8_t batteryLevel = 100);
   void begin(void);
   void end(void);
   void sendReport(KeyReport* keys);
@@ -165,7 +173,7 @@ public:
   void releaseAll(void);
   bool isConnected(void);
   void setBatteryLevel(uint8_t level);
-  void setName(String deviceName);  
+  void setName(StringType deviceName);  
   void setDelay(uint32_t ms);
 
   void set_vendor_id(uint16_t vid);
