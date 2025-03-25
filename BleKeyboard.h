@@ -129,61 +129,60 @@ const MediaKeyReport KEY_MEDIA_EMAIL_READER = {0, 128};
 #endif
 
 //  Low level key report: up to 6 keys and shift, ctrl etc at once
-typedef struct
-{
-  uint8_t modifiers;
-  uint8_t reserved;
-  uint8_t keys[6];
+typedef struct {
+    uint8_t modifiers;
+    uint8_t reserved;
+    uint8_t keys[6];
 } KeyReport;
 
 class BleKeyboard : public Print, public BLEServerCallbacks, public BLECharacteristicCallbacks
 {
 private:
-  BLEHIDDevice* hid;
-  BLECharacteristic* inputKeyboard;
-  BLECharacteristic* outputKeyboard;
-  BLECharacteristic* inputMediaKeys;
-  BLEAdvertising*    advertising;
-  KeyReport          _keyReport;
-  MediaKeyReport     _mediaKeyReport;
-  StringType        deviceName;
-  StringType        deviceManufacturer;
-  uint8_t            batteryLevel;
-  bool               connected = false;
-  uint32_t           _delay_ms = 7;
-  void delay_ms(uint64_t ms);
+    BLEHIDDevice *hid;
+    BLECharacteristic *inputKeyboard;
+    BLECharacteristic *outputKeyboard;
+    BLECharacteristic *inputMediaKeys;
+    BLEAdvertising    *advertising;
+    KeyReport          _keyReport;
+    MediaKeyReport     _mediaKeyReport;
+    StringType        deviceName;
+    StringType        deviceManufacturer;
+    uint8_t            batteryLevel;
+    bool               connected = false;
+    uint32_t           _delay_ms = 7;
+    void delay_ms(uint64_t ms);
 
-  uint16_t vid       = 0x05ac;
-  uint16_t pid       = 0x820a;
-  uint16_t version   = 0x0210;
+    uint16_t vid       = 0x05ac;
+    uint16_t pid       = 0x820a;
+    uint16_t version   = 0x0210;
 
 public:
-  BleKeyboard(StringType deviceName = "ESP32 Keyboard", StringType deviceManufacturer = "Espressif", uint8_t batteryLevel = 100);
-  void begin(void);
-  void end(void);
-  void sendReport(KeyReport* keys);
-  void sendReport(MediaKeyReport* keys);
-  size_t press(uint8_t k);
-  size_t press(const MediaKeyReport k);
-  size_t release(uint8_t k);
-  size_t release(const MediaKeyReport k);
-  size_t write(uint8_t c);
-  size_t write(const MediaKeyReport c);
-  size_t write(const uint8_t *buffer, size_t size);
-  void releaseAll(void);
-  bool isConnected(void);
-  void setBatteryLevel(uint8_t level);
-  void setName(StringType deviceName);  
-  void setDelay(uint32_t ms);
+    BleKeyboard(StringType deviceName = "ESP32 Keyboard", StringType deviceManufacturer = "Espressif", uint8_t batteryLevel = 100);
+    void begin(void);
+    void end(void);
+    void sendReport(KeyReport* keys);
+    void sendReport(MediaKeyReport* keys);
+    size_t press(uint8_t k);
+    size_t press(const MediaKeyReport k);
+    size_t release(uint8_t k);
+    size_t release(const MediaKeyReport k);
+    size_t write(uint8_t c);
+    size_t write(const MediaKeyReport c);
+    size_t write(const uint8_t *buffer, size_t size);
+    void releaseAll(void);
+    bool isConnected(void);
+    void setBatteryLevel(uint8_t level);
+    void setName(StringType deviceName);
+    void setDelay(uint32_t ms);
 
-  void set_vendor_id(uint16_t vid);
-  void set_product_id(uint16_t pid);
-  void set_version(uint16_t version);
+    void set_vendor_id(uint16_t vid);
+    void set_product_id(uint16_t pid);
+    void set_version(uint16_t version);
 protected:
-  virtual void onStarted(BLEServer *pServer) { };
-  virtual void onConnect(BLEServer* pServer) override;
-  virtual void onDisconnect(BLEServer* pServer) override;
-  virtual void onWrite(BLECharacteristic* me) override;
+    virtual void onStarted(BLEServer *pServer) { };
+    virtual void onConnect(BLEServer* pServer) override;
+    virtual void onDisconnect(BLEServer* pServer) override;
+    virtual void onWrite(BLECharacteristic* me) override;
 
 };
 
