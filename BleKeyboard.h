@@ -1,5 +1,6 @@
 // uncomment the following line to use NimBLE library
-//#define USE_NIMBLE
+#define USE_NIMBLE
+#define USE_NIMBLE_V2  // > 2.0.0
 
 #ifndef ESP32_BLE_KEYBOARD_H
 #define ESP32_BLE_KEYBOARD_H
@@ -10,6 +11,7 @@
 
 #include "NimBLECharacteristic.h"
 #include "NimBLEHIDDevice.h"
+#include "NimBLEServer.h"
 
 #define BLEDevice                  NimBLEDevice
 #define BLEServerCallbacks         NimBLEServerCallbacks
@@ -19,12 +21,28 @@
 #define BLEAdvertising             NimBLEAdvertising
 #define BLEServer                  NimBLEServer
 
+#ifdef USE_NIMBLE_V2
+#define inputReport getInputReport
+#define outputReport getOutputReport
+#define reportMap setReportMap
+#define hidService  getHidService
+#define setScanResponse enableScanResponse
+#define pnp setPnp
+#define hidInfo setHidInfo
+#endif
+
 #else
 
 #include "BLEHIDDevice.h"
 #include "BLECharacteristic.h"
-
+#include <Arduino.h>
 #endif // USE_NIMBLE
+
+#ifdef USE_NIMBLE_V2
+#define BLE_SERVER_CONN_PARAMS_TYPE     NimBLEConnInfo&
+#else
+#define BLE_SERVER_CONN_PARAMS_TYPE     esp_ble_gatts_cb_param_t*
+#endif
 
 #include "Print.h"
 
@@ -120,7 +138,7 @@ const MediaKeyReport KEY_MEDIA_CONSUMER_CONTROL_CONFIGURATION = {0, 64}; // Medi
 const MediaKeyReport KEY_MEDIA_EMAIL_READER = {0, 128};
 
 #include "esp_arduino_version.h"
-#if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(3,0,0)
+#if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(3,0,0) && !defined(USE_NIMBLE)
 #define StringType   String
 #define SubString    substring
 #else
@@ -135,20 +153,19 @@ typedef struct {
     uint8_t keys[6];
 } KeyReport;
 
-class BleKeyboard : public Print, public BLEServerCallbacks, public BLECharacteristicCallbacks
+class BleKeyboard : public Print
 {
 private:
-    BLEHIDDevice *hid;
-    BLECharacteristic *inputKeyboard;
+    BLEHIDDevice *hid = nullptr;
+    BLECharacteristicCallbacks  *pCharacteristicCallbacks = nullptr;
+    BLEServerCallbacks *pServerCallbacks = nullptr;
     BLECharacteristic *outputKeyboard;
-    BLECharacteristic *inputMediaKeys;
     BLEAdvertising    *advertising;
     KeyReport          _keyReport;
     MediaKeyReport     _mediaKeyReport;
     StringType        deviceName;
     StringType        deviceManufacturer;
     uint8_t            batteryLevel;
-    bool               connected = false;
     uint32_t           _delay_ms = 7;
     void delay_ms(uint64_t ms);
 
@@ -158,7 +175,8 @@ private:
 
 public:
     BleKeyboard(StringType deviceName = "ESP32 Keyboard", StringType deviceManufacturer = "Espressif", uint8_t batteryLevel = 100);
-    void begin(void);
+
+    bool begin(void);
     void end(void);
     void sendReport(KeyReport* keys);
     void sendReport(MediaKeyReport* keys);
@@ -178,12 +196,6 @@ public:
     void set_vendor_id(uint16_t vid);
     void set_product_id(uint16_t pid);
     void set_version(uint16_t version);
-protected:
-    virtual void onStarted(BLEServer *pServer) { };
-    virtual void onConnect(BLEServer* pServer) override;
-    virtual void onDisconnect(BLEServer* pServer) override;
-    virtual void onWrite(BLECharacteristic* me) override;
-
 };
 
 #endif // CONFIG_BT_ENABLED
