@@ -1,6 +1,6 @@
 // uncomment the following line to use NimBLE library
-#define USE_NIMBLE
-#define USE_NIMBLE_V2  // > 2.0.0
+// #define USE_NIMBLE
+// #define USE_NIMBLE_V2  // > 2.0.0
 
 #ifndef ESP32_BLE_KEYBOARD_H
 #define ESP32_BLE_KEYBOARD_H
