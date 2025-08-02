@@ -100,11 +100,19 @@ static const uint8_t _hidReportDescriptor[] = {
 
 class CharacteristicCallbacks : public BLECharacteristicCallbacks
 {
-    void onRead(BLECharacteristic* pCharacteristic, BLE_SERVER_CONN_PARAMS_TYPE connInfo) override
+    void onRead(BLECharacteristic* pCharacteristic
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
+    , BLE_SERVER_CONN_PARAMS_TYPE connInfo
+#endif
+    ) override
     {
     }
 
-    void onWrite(BLECharacteristic* pCharacteristic, BLE_SERVER_CONN_PARAMS_TYPE connInfo) override
+    void onWrite(BLECharacteristic* pCharacteristic
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
+    , BLE_SERVER_CONN_PARAMS_TYPE connInfo
+#endif
+    ) override
     {
     }
 
@@ -122,7 +130,11 @@ class CharacteristicCallbacks : public BLECharacteristicCallbacks
 
 class ServerCallbacks : public BLEServerCallbacks
 {
-    void onConnect(BLEServer* pServer, BLE_SERVER_CONN_PARAMS_TYPE connInfo) override
+    void onConnect(BLEServer* pServer
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
+    , BLE_SERVER_CONN_PARAMS_TYPE connInfo
+#endif
+    ) override
     {
         connected = true;
 #if !defined(USE_NIMBLE)
@@ -135,9 +147,12 @@ class ServerCallbacks : public BLEServerCallbacks
 #endif // !USE_NIMBLE
     }
 
-    void onDisconnect(BLEServer* pServer, BLE_SERVER_CONN_PARAMS_TYPE connInfo
+    void onDisconnect(BLEServer* pServer
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
+    , BLE_SERVER_CONN_PARAMS_TYPE connInfo
 #ifdef USE_NIMBLE_V2
                       , int reason
+#endif
 #endif
                      ) override
     {
@@ -254,7 +269,9 @@ bool BleKeyboard::begin(void)
 #else
     BLESecurity* pSecurity = new BLESecurity();
     // pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
     pSecurity->setAuthenticationMode(ESP_LE_AUTH_NO_BOND);
+#endif
     if (pSecurity == nullptr) {
         log_e("Memory request failed, unable to create a new BLESecurity object");
         delete hid;

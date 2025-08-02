@@ -38,10 +38,12 @@
 #include <Arduino.h>
 #endif // USE_NIMBLE
 
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
 #ifdef USE_NIMBLE_V2
 #define BLE_SERVER_CONN_PARAMS_TYPE     NimBLEConnInfo&
 #else
 #define BLE_SERVER_CONN_PARAMS_TYPE     esp_ble_gatts_cb_param_t*
+#endif
 #endif
 
 #include "Print.h"
