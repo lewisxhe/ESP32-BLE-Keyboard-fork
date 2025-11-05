@@ -100,28 +100,27 @@ static const uint8_t _hidReportDescriptor[] = {
 
 class CharacteristicCallbacks : public BLECharacteristicCallbacks
 {
-    void onRead(BLECharacteristic* pCharacteristic
-#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
-    , BLE_SERVER_CONN_PARAMS_TYPE connInfo
+#if defined(USE_NIMBLE)
+    void onRead(BLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override
+#else
+    void onRead(BLECharacteristic *pCharacteristic)
 #endif
-    ) override
     {
     }
-
-    void onWrite(BLECharacteristic* pCharacteristic
-#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
-    , BLE_SERVER_CONN_PARAMS_TYPE connInfo
+#if defined(USE_NIMBLE)
+    void onWrite(BLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override
+#else
+    void onWrite(BLECharacteristic *pCharacteristic)
 #endif
-    ) override
     {
     }
 
-#ifdef USE_NIMBLE_V2
-    void onStatus(BLECharacteristic* pCharacteristic, int code) override
+#if defined(USE_NIMBLE)
+    void onStatus(BLECharacteristic *pCharacteristic, int code) override
     {
     }
 
-    void onSubscribe(BLECharacteristic* pCharacteristic, BLE_SERVER_CONN_PARAMS_TYPE connInfo, uint16_t subValue) override
+    void onSubscribe(BLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo, uint16_t subValue) override
     {
     }
 #endif
@@ -130,55 +129,51 @@ class CharacteristicCallbacks : public BLECharacteristicCallbacks
 
 class ServerCallbacks : public BLEServerCallbacks
 {
-    void onConnect(BLEServer* pServer
-#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
-    , BLE_SERVER_CONN_PARAMS_TYPE connInfo
+#if defined(USE_NIMBLE)
+    void onConnect(BLEServer *pServer, NimBLEConnInfo &connInfo) override
+#else
+    void onConnect(BLEServer *pServer)
 #endif
-    ) override
     {
         connected = true;
 #if !defined(USE_NIMBLE)
         if (inputKeyboard && inputMediaKeys) {
-            BLE2902* desc = (BLE2902*)inputKeyboard->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
+            BLE2902 *desc = (BLE2902 *)inputKeyboard->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
             desc->setNotifications(true);
-            desc = (BLE2902*)inputMediaKeys->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
+            desc = (BLE2902 *)inputMediaKeys->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
             desc->setNotifications(true);
         }
 #endif // !USE_NIMBLE
     }
 
-    void onDisconnect(BLEServer* pServer
-#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
-    , BLE_SERVER_CONN_PARAMS_TYPE connInfo
-#ifdef USE_NIMBLE_V2
-                      , int reason
+#if defined(USE_NIMBLE)
+    void onDisconnect(BLEServer *pServer, NimBLEConnInfo &connInfo, int reason) override
+#else
+    void onDisconnect(BLEServer *pServer)
 #endif
-#endif
-                     ) override
     {
         connected = false;
 #if !defined(USE_NIMBLE)
         if (inputKeyboard && inputMediaKeys) {
-            BLE2902* desc = (BLE2902*)inputKeyboard->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
+            BLE2902 *desc = (BLE2902 *)inputKeyboard->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
             desc->setNotifications(false);
-            desc = (BLE2902*)inputMediaKeys->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
+            desc = (BLE2902 *)inputMediaKeys->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
             desc->setNotifications(false);
         }
 #endif // !USE_NIMBLE
         BLEDevice::startAdvertising();
-
     }
 
-#ifdef USE_NIMBLE_V2
-    void onMTUChange(uint16_t MTU, BLE_SERVER_CONN_PARAMS_TYPE connInfo) override
+#if defined(USE_NIMBLE)
+    void onMTUChange(uint16_t MTU, NimBLEConnInfo &connInfo) override
     {
-        Serial.printf("MTU updated: %u for connection ID: %u\n", MTU, connInfo.getConnHandle());
+        // log_d("MTU updated: %u for connection ID: %u\n", MTU, connInfo.getConnHandle());
     }
 
     /********************* Security handled here *********************/
     uint32_t onPassKeyDisplay() override
     {
-        Serial.printf("Server Passkey Display\n");
+        log_d("Server Passkey Display\n");
         /**
          * This should return a random 6 digit number for security
          *  or make your own static passkey as done here.
@@ -186,25 +181,25 @@ class ServerCallbacks : public BLEServerCallbacks
         return 123456;
     }
 
-    void onConfirmPassKey(NimBLEConnInfo& connInfo, uint32_t pass_key) override
+    void onConfirmPassKey(NimBLEConnInfo &connInfo, uint32_t pass_key) override
     {
-        Serial.printf("The passkey YES/NO number: %" PRIu32 "\n", pass_key);
+        log_d("The passkey YES/NO number: %" PRIu32 "\n", pass_key);
         /** Inject false if passkeys don't match. */
         BLEDevice::injectConfirmPasskey(connInfo, true);
     }
 
-    void onAuthenticationComplete(NimBLEConnInfo& connInfo) override
+    void onAuthenticationComplete(NimBLEConnInfo &connInfo) override
     {
         /** Check that encryption was successful, if not we disconnect the client */
         if (!connInfo.isEncrypted()) {
             BLEDevice::getServer()->disconnect(connInfo.getConnHandle());
-            Serial.printf("Encrypt connection failed - disconnecting client\n");
+            log_d("Encrypt connection failed - disconnecting client\n");
             return;
         }
-
-        Serial.printf("Secured connection to: %s\n", connInfo.getAddress().toString().c_str());
+        log_d("Secured connection to: %s\n", connInfo.getAddress().toString().c_str());
     }
 #endif
+
 };
 
 BleKeyboard::BleKeyboard(StringType deviceName, StringType deviceManufacturer, uint8_t batteryLevel)
@@ -213,7 +208,7 @@ BleKeyboard::BleKeyboard(StringType deviceName, StringType deviceManufacturer, u
     , deviceManufacturer(StringType(deviceManufacturer).SubString(0, 15))
     , batteryLevel(batteryLevel) {}
 
-// Repeated calls to end and begin using Bluedroid will get stuck at begin. 
+// Repeated calls to end and begin using Bluedroid will get stuck at begin.
 // It is recommended to use Nimble
 bool BleKeyboard::begin(void)
 {
@@ -222,9 +217,10 @@ bool BleKeyboard::begin(void)
         return true;
     }
 
+    log_i("Start BLE Keyboard,Set Device Name: %s", deviceName.c_str());
     BLEDevice::init(deviceName);
 
-    BLEServer* pServer = BLEDevice::createServer();
+    BLEServer *pServer = BLEDevice::createServer();
 
     pServerCallbacks = new ServerCallbacks();
     if (!pServerCallbacks) {
@@ -256,18 +252,12 @@ bool BleKeyboard::begin(void)
     inputMediaKeys = hid->inputReport(MEDIA_KEYS_ID);
     outputKeyboard->setCallbacks(pCharacteristicCallbacks);
 
-#ifdef USE_NIMBLE_V2
-    hid->setManufacturer(deviceManufacturer);
-#else
-    hid->manufacturer()->setValue(deviceManufacturer);
-#endif
     hid->pnp(0x02, vid, pid, version);
     hid->hidInfo(0x00, 0x01);
 
-#if defined(USE_NIMBLE)
-    BLEDevice::setSecurityAuth(true, true, true);
-#else
-    BLESecurity* pSecurity = new BLESecurity();
+#ifndef USE_NIMBLE
+    hid->manufacturer()->setValue(deviceManufacturer);
+    BLESecurity *pSecurity = new BLESecurity();
     // pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
     pSecurity->setAuthenticationMode(ESP_LE_AUTH_NO_BOND);
@@ -284,17 +274,59 @@ bool BleKeyboard::begin(void)
     }
 #endif // USE_NIMBLE
 
-    hid->reportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
+    hid->reportMap((uint8_t *)_hidReportDescriptor, sizeof(_hidReportDescriptor));
     hid->startServices();
 
     advertising = pServer->getAdvertising();
+
+#ifdef USE_NIMBLE
+    BLEDevice::setSecurityAuth(false, false, false);
+    advertising->reset();
+    advertising->clearData();
+    advertising->setPreferredParams(160, 320); // 160×0.625=100ms，320×0.625=200ms
+    NimBLEAdvertisementData advData;
+    advData.setFlags(BLE_HS_ADV_F_BREDR_UNSUP | BLE_HS_ADV_F_DISC_GEN);
+    advData.setName(deviceName, true);
+    advData.addServiceUUID(BLEUUID((uint16_t)0x1812));
+    advData.setAppearance(HID_KEYBOARD);
+    NimBLEAdvertisementData scanRespData;
+    if (!deviceManufacturer.empty()) {
+        scanRespData.setManufacturerData(deviceManufacturer);
+    }
+    if (deviceName.length() > 16) {
+        scanRespData.setName(deviceName, true);
+    }
+    advertising->setAdvertisementData(advData);
+    advertising->setScanResponseData(scanRespData);
+    advertising->enableScanResponse(true);
+    advertising->setConnectableMode(BLE_GAP_CONN_MODE_UND);
+
+
+    bool advStarted = advertising->start();
+    if (advStarted) {
+        log_d("✅ Device broadcast started successfully!");
+    } else {
+        log_e("❌ Device broadcast startup failed!!");
+        return false;
+    }
+
+
+    // std::vector<uint8_t> payload = advData.getPayload();
+    // Serial.println("📥 Broadcast packet raw data：");
+    // for (size_t i = 0; i < payload.size(); i++) {
+    //     Serial.printf("%02x ", payload[i]);
+    // }
+    // Serial.println();
+
+#else
     advertising->setAppearance(HID_KEYBOARD);
     advertising->addServiceUUID(hid->hidService()->getUUID());
-    advertising->setScanResponse(false);
+    advertising->setScanResponse(true);
     advertising->start();
+#endif
+
     hid->setBatteryLevel(batteryLevel);
 
-    log_d("Advertising started!");
     return true;
 }
 
@@ -371,10 +403,10 @@ void BleKeyboard::set_version(uint16_t version)
     this->version = version;
 }
 
-void BleKeyboard::sendReport(KeyReport* keys)
+void BleKeyboard::sendReport(KeyReport *keys)
 {
     if (this->isConnected() && inputKeyboard) {
-        inputKeyboard->setValue((uint8_t*)keys, sizeof(KeyReport));
+        inputKeyboard->setValue((uint8_t *)keys, sizeof(KeyReport));
         inputKeyboard->notify();
 #if defined(USE_NIMBLE)
         // vTaskDelay(delayTicks);
@@ -383,10 +415,10 @@ void BleKeyboard::sendReport(KeyReport* keys)
     }
 }
 
-void BleKeyboard::sendReport(MediaKeyReport* keys)
+void BleKeyboard::sendReport(MediaKeyReport *keys)
 {
     if (this->isConnected() && inputMediaKeys) {
-        inputMediaKeys->setValue((uint8_t*)keys, sizeof(MediaKeyReport));
+        inputMediaKeys->setValue((uint8_t *)keys, sizeof(MediaKeyReport));
         inputMediaKeys->notify();
 #if defined(USE_NIMBLE)
         //vTaskDelay(delayTicks);

@@ -1,6 +1,5 @@
-// uncomment the following line to use NimBLE library
+// Uncomment the following line to use the NimBLE library; version v2.x or later is required.
 #define USE_NIMBLE
-#define USE_NIMBLE_V2  // > 2.0.0
 
 #ifndef ESP32_BLE_KEYBOARD_H
 #define ESP32_BLE_KEYBOARD_H
@@ -20,38 +19,26 @@
 #define BLECharacteristic          NimBLECharacteristic
 #define BLEAdvertising             NimBLEAdvertising
 #define BLEServer                  NimBLEServer
+#define inputReport                getInputReport
+#define outputReport               getOutputReport
+#define reportMap                  setReportMap
+#define hidService                 getHidService
+#define pnp                        setPnp
+#define hidInfo                    setHidInfo
 
-#ifdef USE_NIMBLE_V2
-#define inputReport getInputReport
-#define outputReport getOutputReport
-#define reportMap setReportMap
-#define hidService  getHidService
-#define setScanResponse enableScanResponse
-#define pnp setPnp
-#define hidInfo setHidInfo
-#endif
-
-#else
+#else   // USE_NIMBLE
 
 #include "BLEHIDDevice.h"
 #include "BLECharacteristic.h"
 #include <Arduino.h>
 #endif // USE_NIMBLE
 
-#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,3,0)
-#ifdef USE_NIMBLE_V2
-#define BLE_SERVER_CONN_PARAMS_TYPE     NimBLEConnInfo&
-#else
-#define BLE_SERVER_CONN_PARAMS_TYPE     esp_ble_gatts_cb_param_t*
-#endif
-#endif
-
 #include "Print.h"
 
-#define BLE_KEYBOARD_VERSION "0.0.4"
+#define BLE_KEYBOARD_VERSION "0.0.5"
 #define BLE_KEYBOARD_VERSION_MAJOR 0
 #define BLE_KEYBOARD_VERSION_MINOR 0
-#define BLE_KEYBOARD_VERSION_REVISION 4
+#define BLE_KEYBOARD_VERSION_REVISION 5
 
 const uint8_t KEY_LEFT_CTRL = 0x80;
 const uint8_t KEY_LEFT_SHIFT = 0x81;
@@ -180,8 +167,8 @@ public:
 
     bool begin(void);
     void end(void);
-    void sendReport(KeyReport* keys);
-    void sendReport(MediaKeyReport* keys);
+    void sendReport(KeyReport *keys);
+    void sendReport(MediaKeyReport *keys);
     size_t press(uint8_t k);
     size_t press(const MediaKeyReport k);
     size_t release(uint8_t k);
