@@ -13,7 +13,7 @@
 #include "BLEHIDDevice.h"
 #endif // USE_NIMBLE
 #include "HIDTypes.h"
-#include <driver/adc.h>
+// #include <driver/adc.h>
 #include "sdkconfig.h"
 
 
